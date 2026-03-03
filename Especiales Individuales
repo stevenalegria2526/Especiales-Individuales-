@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Especiales Individuales</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body{
+    margin:0;
+    font-family:'Poppins',sans-serif;
+    background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+}
+
+.container{
+    background:white;
+    width:95%;
+    max-width:600px;
+    padding:30px;
+    border-radius:20px;
+    box-shadow:0 15px 35px rgba(0,0,0,0.3);
+    text-align:center;
+    position:relative;
+    overflow:hidden;
+}
+
+h1{ color:#2c5364; }
+
+select{
+    width:80%;
+    padding:10px;
+    border-radius:8px;
+    margin:15px 0;
+    border:1px solid #ccc;
+}
+
+button{
+    padding:12px 18px;
+    border:none;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:600;
+    background:#2c5364;
+    color:white;
+    transition:0.3s;
+}
+
+button:hover{ background:#1c3742; }
+
+.card{
+    background:#f4f6f9;
+    padding:15px;
+    margin-top:15px;
+    border-radius:12px;
+    box-shadow:0 8px 15px rgba(0,0,0,0.1);
+    animation:fadeIn 0.6s ease;
+}
+
+@keyframes fadeIn{
+    from{opacity:0; transform:scale(0.9);}
+    to{opacity:1; transform:scale(1);}
+}
+
+.flash{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:white;
+    opacity:0;
+    pointer-events:none;
+}
+
+.flash.active{
+    animation:flashEffect 0.4s ease;
+}
+
+@keyframes flashEffect{
+    0%{opacity:1;}
+    100%{opacity:0;}
+}
+
+.admin-panel{
+    margin-top:20px;
+    text-align:left;
+    background:#f8f9fa;
+    padding:15px;
+    border-radius:10px;
+    display:none;
+}
+
+.admin-panel h3{
+    margin-top:0;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+<div class="flash" id="flash"></div>
+
+<h1>Especiales Individuales</h1>
+
+<select id="nombreSelect">
+<option value="">Selecciona tu nombre</option>
+</select>
+
+<br>
+<button onclick="asignar()">Realizar Sorteo</button>
+
+<div id="resultado"></div>
+
+<hr>
+
+<button onclick="accesoAdmin()">Acceso Administrador</button>
+
+<div class="admin-panel" id="adminPanel">
+<h3>Resultados Guardados</h3>
+<div id="adminResultados"></div>
+</div>
+
+</div>
+
+<script>
+const ADMIN_CODE = "ADMIN2026";
+
+let personas = [
+"Abigail Rubio","Cinthia Lopez","Maholy Cruz","Abigail Lara",
+"Alejandra Ramos","Zoe Ordoñez","Ezquiel Ordoñez","Caleb Ordoñez",
+"Eduardo Ordoñez","Karly Cabrera","Hannah Perez","Eunice Guiterrez",
+"Jessy Galvez","Angely Redondo","Jafeth Redondo","Jency Orellana"
+];
+
+let fechasOriginal = [
+"Domingo 8 Marzo","Martes 10 Marzo","Viernes 13 Marzo","Domingo 15 Marzo",
+"Martes 17 Marzo","Martes 24 Marzo","Viernes 27 Marzo","Domingo 29 Marzo",
+"Martes 31 Marzo","Viernes 3 Abril","Domingo 5 Abril","Martes 7 Abril",
+"Viernes 10 Abril","Domingo 12 Abril","Martes 14 Abril","Viernes 17 Abril"
+];
+
+// Cargar datos guardados
+let resultados = JSON.parse(localStorage.getItem("resultados")) || [];
+let usados = resultados.map(r => r.nombre);
+
+// Calcular fechas disponibles
+let fechas = fechasOriginal.filter(f =>
+    !resultados.some(r => r.fecha === f)
+);
+
+// Cargar nombres disponibles
+let select = document.getElementById("nombreSelect");
+personas.forEach(nombre=>{
+    if(!usados.includes(nombre)){
+        let option = document.createElement("option");
+        option.value = nombre;
+        option.textContent = nombre;
+        select.appendChild(option);
+    }
+});
+
+// Mostrar resultados previos
+mostrarResultados();
+
+function asignar(){
+    let nombre = select.value;
+
+    if(nombre === ""){
+        alert("Selecciona tu nombre.");
+        return;
+    }
+
+    if(usados.includes(nombre)){
+        alert("Ya realizaste tu sorteo.");
+        return;
+    }
+
+    if(fechas.length === 0){
+        alert("Ya no hay fechas disponibles.");
+        return;
+    }
+
+    let flash = document.getElementById("flash");
+    flash.classList.add("active");
+    setTimeout(()=>flash.classList.remove("active"),400);
+
+    let f = Math.floor(Math.random() * fechas.length);
+    let fecha = fechas.splice(f,1)[0];
+
+    let nuevo = { nombre, fecha };
+    resultados.push(nuevo);
+    usados.push(nombre);
+
+    localStorage.setItem("resultados", JSON.stringify(resultados));
+
+    mostrarResultados();
+    select.querySelector(`option[value="${nombre}"]`).remove();
+    select.value="";
+}
+
+function mostrarResultados(){
+    let contenedor = document.getElementById("resultado");
+    contenedor.innerHTML="";
+    resultados.forEach(r=>{
+        contenedor.innerHTML += 
+        `<div class="card"><strong>${r.nombre}</strong><br>Fecha asignada: ${r.fecha}</div>`;
+    });
+}
+
+function accesoAdmin(){
+    let codigo = prompt("Ingrese código de administrador:");
+    if(codigo === ADMIN_CODE){
+        let panel = document.getElementById("adminPanel");
+        panel.style.display="block";
+
+        let lista = document.getElementById("adminResultados");
+        lista.innerHTML="";
+        resultados.forEach(r=>{
+            lista.innerHTML += `<p>${r.nombre} - ${r.fecha}</p>`;
+        });
+    } else {
+        alert("Código incorrecto.");
+    }
+}
+</script>
+
+</body>
+</html>
